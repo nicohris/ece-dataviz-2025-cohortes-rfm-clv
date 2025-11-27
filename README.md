@@ -1,129 +1,78 @@
+# 📘 Projet ECE DataViz 2025
 
----
+**Cohortes · RFM · CLV · Scénarios Marketing**
 
-# 🎉 **README.md – Projet ECE DataViz 2025**
+## 🎯 Présentation
 
-### **Analyse Cohortes • Segmentation RFM • CLV • Simulation Marketing**
-
-
-**Membres : Benjamin • Paul • Gilles • Nicolas • Antoine • Arthur**
-
----
-
-# 📌 1. Contexte du projet
-
-Ce projet est réalisé dans le cadre du cours **Dataviz & Data Storytelling** à l’ECE.
-Il consiste à développer une application interactive permettant d’analyser le comportement client et de produire des recommandations marketing basées sur :
+Ce projet consiste à développer une **application d’aide à la décision marketing** basée sur :
 
 * l’analyse des **cohortes d’acquisition**,
 * la segmentation **RFM**,
 * l’estimation de la **Customer Lifetime Value (CLV)**,
-* la simulation de **scénarios business**,
-* et l’export de données actionnables.
+* et la simulation de **scénarios business** (marge, remise, rétention…).
 
-Le tout à partir du dataset **Online Retail II (UCI)** contenant ~1M de transactions e-commerce (2009–2011).
-
----
-
-# 🎯 2. Objectifs analytiques
-
-### **Cohortes**
-
-* Rétention M+1, M+2…
-* Détection des cohortes qui décrochent
-* Analyse du revenu par âge de cohorte
-
-### **Segmentation RFM**
-
-* Calcul Recency–Frequency–Monetary
-* Création de segments actionnables
-* Comparaison des segments
-
-### **CLV**
-
-* Approche empirique (cohortes)
-* Modèle paramétrique (r, d)
-* Comparaison des méthodes
-
-### **Scénarios**
-
-* Simulation % rétention
-* Simulation % remises
-* Simulation marge
-* Effet sur CA / CLV / rétention
-
-### **Exports**
-
-* CSV “liste activable”
-* Graphiques PNG
+**Données utilisées :** Online Retail II (UCI) — 1,07M transactions e-commerce UK entre *2009 et 2011*.
 
 ---
 
-# 🖥️ 3. Contenu de l’application
+## 🧪 Partie 1 — Notebook d’exploration
 
-### **1. KPIs**
+Objectif : obtenir une compréhension solide du dataset avant la construction de l’application.
 
-Affichage des indicateurs clés (clients actifs, CA, RFM, CLV baseline, rétention, etc.).
-Chaque KPI inclut une **définition + unité + exemple**.
+Le notebook devra inclure :
 
-### **2. Cohortes**
-
-Heatmap, évolutions de rétention, focus cohortes, filtres.
-
-### **3. RFM**
-
-Calcul des scores, labels, tableau des segments.
-
-### **4. CLV & Scénarios**
-
-Estimation, sliders de simulation, graphiques before/after.
-
-### **5. Exports**
-
-CSV & PNG.
+* Une fiche synthétique des données + dictionnaire des variables
+* Analyse qualité : manquants, doublons, retours ("C"), outliers
+* Visualisations clés (6–8) : distributions, saisonnalité, pays, premiers signaux cohortes & RFM
+* Interprétations claires de chaque graphique
+* Questions d’analyse pour cadrer l’app : cohorte qui décrochent, segments à forte valeur, effet des retours…
 
 ---
 
-# 📦 4. Données
+## 💻 Partie 2 — Application Streamlit
 
-Dataset : **Online Retail II – UCI**
-Période : 2009–2011
-Colonnes principales : CustomerID, InvoiceDate, Quantity, UnitPrice, Country…
+L’application doit permettre à l’équipe marketing de :
 
-Nettoyages :
+### 🔍 Diagnostiquer
 
-* exclusion des factures annulées
-* quantités/prix négatifs
-* TotalPrice
-* gestion valeurs manquantes
+* Heatmap de rétention par cohortes
+* Courbes de revenu par âge de cohorte
+* Segments RFM (taille, CA, marge, priorités d’action)
 
----
+### 📈 Simuler
 
-# 🧑‍💻 5. Membres du groupe & responsabilités
+* Variation de rétention (r)
+* Variation de marge / remise
+* Taux d’actualisation (d)
+* Application globale ou par segment RFM
 
-| Membre       | Tâches principales                   |
-| ------------ | ------------------------------------ |
-| **Benjamin** | Cohortes & Rétention                 |
-| **Paul**     | Segmentation RFM                     |
-| **Gilles**   | Notebook d’exploration visuelle      |
-| **Nicolas**  | Préparation & nettoyage des données  |
-| **Antoine**  | Estimation CLV (empirique + formule) |
-| **Arthur**   | Application Streamlit & Interface    |
+Objectif : mesurer instantanément l’impact sur **CLV**, **CA** et **rétention**.
 
+### 📤 Exporter
+
+* CSV des listes activables (CustomerID + segment)
+* PNG des visualisations
+  → pour faciliter le passage à l’action (CRM, campagnes…).
 
 ---
 
-# 🚀 6. Instructions
+## 📐 KPIs — Definitions attendues
 
-### Installation
+Chaque KPI devra afficher une aide intégrée :
 
-```bash
-pip install -r requirements.txt
-```
+* CLV moyenne
+* Rétention à t (ex : M+3)
+* Score RFM
+* CLV empirique vs formule
+  Objectif : rendre l’app explicite et compréhensible par un utilisateur non technique.
 
-### Lancement de l’application
+---
 
-```bash
-streamlit run app.py
-```
+## 🎨 Lignes directrices recommandées
 
+* Toujours afficher les filtres actifs
+* Donner les effectifs (n)
+* Une idée par graphique
+* Labels lisibles, contraste suffisant
+* Gestion explicite des valeurs manquantes/outliers
+* Comparaisons baseline vs scénario clairement indiquées
