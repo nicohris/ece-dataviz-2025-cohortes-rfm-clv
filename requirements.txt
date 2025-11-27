@@ -6,3 +6,5 @@ kaleido
 openpyxl
 matplotlib
 seaborn
+jupyter
+ipipykernel
