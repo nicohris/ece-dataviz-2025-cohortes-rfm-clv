@@ -13,9 +13,9 @@ from utils import (
     rfm as rfm_mod,
 )
 
-st.set_page_config(page_title="📤 Export - Online Retail II", layout="wide")
+st.set_page_config(page_title="Export - Online Retail II", layout="wide")
 
-st.title("📤 Export de données")
+st.title("Export de données")
 
 filters = visuals.render_global_sidebar()
 df = visuals.get_prepared_data(
@@ -32,11 +32,11 @@ if df.empty:
     st.stop()
 
 # -------------- Export des transactions filtrées --------------
-st.subheader("🧾 Transactions filtrées")
+st.subheader("Transactions filtrées")
 
 csv_tx = df.to_csv(index=False).encode("utf-8")
 st.download_button(
-    "⬇️ Exporter les transactions filtrées (CSV)",
+    "Exporter les transactions filtrées (CSV)",
     data=csv_tx,
     file_name="transactions_filtrees.csv",
     mime="text/csv",
@@ -48,7 +48,7 @@ st.caption(
 
 # -------------- Export RFM --------------
 st.markdown("---")
-st.subheader("💎 Table RFM")
+st.subheader("Table RFM")
 
 df_rfm_source = df[df["customer_id"].notna()].copy()
 if df_rfm_source.empty:
@@ -68,7 +68,7 @@ else:
 
     csv_rfm = rfm.to_csv(index=False).encode("utf-8")
     st.download_button(
-        "⬇️ Exporter la table RFM (CSV)",
+        "Exporter la table RFM (CSV)",
         data=csv_rfm,
         file_name="rfm_table.csv",
         mime="text/csv",
@@ -80,7 +80,7 @@ else:
 
 # -------------- Export tables cohortes --------------
 st.markdown("---")
-st.subheader("🔥 Tables de cohortes (rétention & CA)")
+st.subheader("Tables de cohortes (rétention & CA)")
 
 df_cohort_src = df[df["customer_id"].notna()].copy()
 if df_cohort_src.empty:
@@ -98,26 +98,26 @@ else:
     col1, col2 = st.columns(2)
     with col1:
         st.download_button(
-            "⬇️ Retention table (CSV)",
+            "Retention table (CSV)",
             data=csv_retention,
             file_name="cohort_retention_table.csv",
             mime="text/csv",
         )
         st.download_button(
-            "⬇️ Counts table (CSV)",
+            "Counts table (CSV)",
             data=csv_counts,
             file_name="cohort_counts_table.csv",
             mime="text/csv",
         )
     with col2:
         st.download_button(
-            "⬇️ Revenue table (CSV)",
+            "Revenue table (CSV)",
             data=csv_rev,
             file_name="cohort_revenue_table.csv",
             mime="text/csv",
         )
         st.download_button(
-            "⬇️ Revenue cumulative (CSV)",
+            "Revenue cumulative (CSV)",
             data=csv_rev_cum,
             file_name="cohort_revenue_cum_table.csv",
             mime="text/cv",

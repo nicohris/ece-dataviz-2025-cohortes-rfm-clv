@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 from utils import visuals
 
-st.set_page_config(page_title="📊 KPIs - Online Retail II", layout="wide")
+st.set_page_config(page_title="KPIs - Online Retail II", layout="wide")
 
-st.title("📊 KPIs — Vue globale")
+st.title("KPIs — Vue globale")
 
 filters = visuals.render_global_sidebar()
 df = visuals.get_prepared_data(
@@ -98,7 +98,7 @@ with col4:
 st.markdown("---")
 
 # -------------- Graphique CA quotidien --------------
-st.subheader("📆 Évolution du CA quotidien")
+st.subheader("Évolution du CA quotidien")
 visuals.line_chart(
     daily_revenue,
     x="invoicedate",
@@ -114,7 +114,7 @@ st.info(
 )
 
 # -------------- Graphique CA mensuel --------------
-st.subheader("📅 CA mensuel (fenêtre filtrée)")
+st.subheader("CA mensuel (fenêtre filtrée)")
 visuals.line_chart(
     monthly_revenue,
     x="invoicedate",
@@ -125,7 +125,7 @@ visuals.line_chart(
 )
 
 # -------------- Répartition pays --------------
-st.subheader("🌍 Répartition du CA par pays")
+st.subheader("Répartition du CA par pays")
 
 country_revenue = (
     df.groupby("country")["revenue"]
@@ -149,6 +149,6 @@ st.caption(
 # -------------- Info accessibilité --------------
 st.markdown("---")
 st.caption(
-    "👁️ Les couleurs et tailles de police ont été choisies pour conserver un contraste suffisant. "
+    "Les couleurs et tailles de police ont été choisies pour conserver un contraste suffisant. "
     "Les valeurs sont également indiquées dans les infobulles des graphiques."
 )

@@ -10,9 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 from utils import visuals, rfm as rfm_mod
 
-st.set_page_config(page_title="💎 RFM - Online Retail II", layout="wide")
+st.set_page_config(page_title="RFM - Online Retail II", layout="wide")
 
-st.title("💎 Segmentation RFM & segments marketing")
+st.title("Segmentation RFM & segments marketing")
 
 filters = visuals.render_global_sidebar()
 df = visuals.get_prepared_data(
@@ -30,7 +30,7 @@ if df.empty:
     st.stop()
 
 # --------- RFM ---------
-st.subheader("📐 Calcul RFM")
+st.subheader("Calcul RFM")
 
 snapshot_date = df["invoicedate"].max() + pd.Timedelta(days=1)
 rfm = rfm_mod.compute_rfm(
@@ -77,7 +77,7 @@ with col3:
 
 # --------- Distribution segments ---------
 st.markdown("---")
-st.subheader("🏷️ Répartition des segments")
+st.subheader("Répartition des segments")
 
 segment_summary = rfm_mod.summarize_rfm_segments(rfm, margin_rate=None)
 
@@ -102,7 +102,7 @@ st.info(
 
 # --------- Scatter Frequency vs Monetary ---------
 st.markdown("---")
-st.subheader("📊 Nuage de points Frequency vs Monetary")
+st.subheader("Nuage de points Frequency vs Monetary")
 
 fig_scatter = px.scatter(
     rfm,
@@ -123,7 +123,7 @@ st.caption(
 
 # --------- Table détaillée ---------
 st.markdown("---")
-st.subheader("📋 Table RFM détaillée")
+st.subheader("Table RFM détaillée")
 
 st.dataframe(
     rfm.sort_values("monetary", ascending=False).head(200),

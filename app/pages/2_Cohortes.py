@@ -10,9 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 from utils import visuals, cohorts
 
-st.set_page_config(page_title="🔥 Cohortes - Online Retail II", layout="wide")
+st.set_page_config(page_title="Cohortes - Online Retail II", layout="wide")
 
-st.title("🔥 Cohortes d’acquisition & rétention")
+st.title("Cohortes d’acquisition & rétention")
 
 filters = visuals.render_global_sidebar()
 df = visuals.get_prepared_data(
@@ -35,7 +35,7 @@ df_cohort = cohorts.assign_cohort(df)
 retention_table, counts_table = cohorts.build_retention_table(df_cohort)
 revenue_table, revenue_cum_table = cohorts.build_revenue_tables(df_cohort)
 
-st.subheader("📌 Heatmap de rétention (premier focus)")
+st.subheader("Heatmap de rétention (premier focus)")
 st.caption(
     "Les valeurs représentent la part de clients d'une cohorte encore actifs à un âge donné "
     "(M+0, M+1, M+2, ...)."
@@ -63,7 +63,7 @@ st.info(
 
 # ---------------- Densité du CA par âge de cohorte ----------------
 st.markdown("---")
-st.subheader("💶 Densité du CA par âge de cohorte")
+st.subheader("Densité du CA par âge de cohorte")
 
 # On normalise par le CA total de la cohorte
 rev_share = revenue_table.div(revenue_table.sum(axis=1), axis=0)
@@ -92,7 +92,7 @@ st.caption(
 
 # ---------------- Valeur cumulée par âge ----------------
 st.markdown("---")
-st.subheader("📈 Valeur cumulée par âge de cohorte")
+st.subheader("Valeur cumulée par âge de cohorte")
 
 avg_rev_per_age = cohorts.compute_avg_revenue_per_age(revenue_table)
 avg_rev_cum = avg_rev_per_age.cumsum()
@@ -131,7 +131,7 @@ st.info(
 
 # ---------------- Focus sur une cohorte ----------------
 st.markdown("---")
-st.subheader("🔍 Focus sur une cohorte spécifique")
+st.subheader("Focus sur une cohorte spécifique")
 
 cohort_options = retention_table.index.tolist()
 selected_cohort_str = st.selectbox("Choisir une cohorte (AAAA-MM)", cohort_options)

@@ -10,7 +10,6 @@ from utils import visuals
 
 st.set_page_config(
     page_title="Online Retail II – Marketing Decision App",
-    page_icon="📈",
     layout="wide",
 )
 
@@ -27,7 +26,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("📈 Online Retail II — Marketing Decision App")
+st.title("Online Retail II — Marketing Decision App")
 st.caption(
     "Cohortes d’acquisition · Segmentation RFM · CLV · Simulation de scénarios."
 )
@@ -89,19 +88,24 @@ else:
         )
 
     st.markdown("---")
+    
+    st.markdown("### Origine des commandes")
+    visuals.map_chart(df, title="Répartition mondiale du Chiffre d'Affaires")
+
+    st.markdown("---")
     st.markdown("### Navigation")
 
     st.markdown(
         """
-        - 📊 **KPIs** : indicateurs globaux, dynamique de CA, répartition pays.
-        - 🔥 **Cohortes** : rétention M+1, M+2…, valeur cumulée par âge de cohorte.
-        - 💎 **Segments RFM** : Champions, Loyaux, À risque, Perdus…
-        - 🎛️ **Scénarios CLV** : simulations sur rétention, marge, remises.
-        - 📤 **Export** : extractions CSV des tables clés.
+        - **KPIs** : indicateurs globaux, dynamique de CA, répartition pays.
+        - **Cohortes** : rétention M+1, M+2…, valeur cumulée par âge de cohorte.
+        - **Segments RFM** : Champions, Loyaux, À risque, Perdus…
+        - **Scénarios CLV** : simulations sur rétention, marge, remises.
+        - **Export** : extractions CSV des tables clés.
         """
     )
 
     st.info(
-        "ℹ️ Tous les filtres applicables (dates, pays, retours, clients anonymes) "
+        "Tous les filtres applicables (dates, pays, retours, clients anonymes) "
         "sont contrôlés via la barre latérale et s’appliquent à l’ensemble des pages."
     )
