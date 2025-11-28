@@ -253,6 +253,94 @@ def simulate_parametric_clv_scenario(
 # 4. PIPELINE COMPLET DE SCÉNARIO SUR LES DONNÉES
 # -------------------------------------------------------------------
 
+def project_future_transactions_with_retention(
+    df: pd.DataFrame,
+    base_retention_rate: float,
+    retention_uplift_pct: float,
+    n_periods: int = 6,
+    customer_col: str = "customer_id",
+    date_col: str = "invoicedate",
+    revenue_col: str = "revenue"
+) -> pd.DataFrame:
+    """
+    Projette des transactions futures en fonction d'un taux de rétention amélioré.
+    
+    Logique CORRIGÉE :
+    - Pour chaque période future, on calcule le % de clients qui restent actifs
+    - On génère des transactions pour ces clients avec leur revenu moyen
+    - La différence entre baseline et scénario vient du NOMBRE de clients actifs
+    
+    Exemple :
+    - 1000 clients, retention baseline 60%, uplift +20% -> nouveau taux 72%
+    - Période 1 : baseline = 600 clients, scénario = 720 clients (+120)
+    - Période 2 : baseline = 360 clients, scénario = 518 clients (+158)
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Données historiques
+    base_retention_rate : float
+        Taux de rétention baseline (ex. 0.65)
+    retention_uplift_pct : float
+        Amélioration relative (ex. 0.10 = +10%)
+    n_periods : int
+        Nombre de périodes futures à projeter
+    customer_col : str
+    date_col : str
+    revenue_col : str
+    
+    Returns
+    -------
+    pd.DataFrame
+        Transactions futures projetées avec le NOUVEAU taux de rétention
+    """
+    df = df.copy()
+    df[date_col] = pd.to_datetime(df[date_col])
+    
+    # Nouveau taux de rétention
+    new_retention_rate = base_retention_rate * (1 + retention_uplift_pct)
+    new_retention_rate = min(0.99, max(0.01, new_retention_rate))
+    
+    # Calculer le revenu moyen par client
+    customer_stats = df.groupby(customer_col).agg({
+        revenue_col: 'mean',
+        date_col: 'max'
+    }).reset_index()
+    customer_stats.columns = [customer_col, 'avg_revenue', 'last_date']
+    
+    total_customers = len(customer_stats)
+    max_date = df[date_col].max()
+    
+    # Générer les transactions futures
+    future_transactions = []
+    
+    for period in range(1, n_periods + 1):
+        # Nombre de clients actifs à cette période avec le NOUVEAU taux
+        # Formule : N_actifs = N_total × retention_rate^period
+        n_active_customers = int(total_customers * (new_retention_rate ** period))
+        
+        # Sélectionner les N premiers clients (déterministe)
+        # On pourrait aussi faire un échantillonnage aléatoire avec seed fixe
+        active_customers = customer_stats.head(n_active_customers)
+        
+        # Générer une transaction pour chaque client actif
+        for _, customer in active_customers.iterrows():
+            future_transactions.append({
+                customer_col: customer[customer_col],
+                date_col: max_date + pd.DateOffset(months=period),
+                revenue_col: customer['avg_revenue'],  # Revenu COMPLET, pas pondéré
+                'is_projected': True,
+                'period': period,
+                'retention_rate_used': new_retention_rate
+            })
+    
+    if not future_transactions:
+        return pd.DataFrame(columns=[customer_col, date_col, revenue_col, 'is_projected', 'period', 'retention_rate_used'])
+    
+    df_future = pd.DataFrame(future_transactions)
+    return df_future
+
+
 def prepare_scenario_dataframe(
     df_raw: pd.DataFrame,
     returns_policy: ReturnsPolicy = "include",
@@ -261,7 +349,11 @@ def prepare_scenario_dataframe(
     discount_pct_global: float = 0.0,
     segment_discounts: Optional[Dict[str, float]] = None,
     segment_col: str = "segment_label",
-    use_segment_discounts: bool = False
+    use_segment_discounts: bool = False,
+    base_retention_rate: Optional[float] = None,
+    retention_uplift_pct: float = 0.0,
+    project_future: bool = True,
+    n_future_periods: int = 6
 ) -> Tuple[pd.DataFrame, dict]:
     """
     Prépare un dataframe transactionnel enrichi pour un scénario
@@ -270,7 +362,8 @@ def prepare_scenario_dataframe(
     - de la politique de retours (include/exclude/neutralize),
     - de l'exclusion des clients sans ID,
     - de l'application d'une marge (colonne 'margin'),
-    - des remises globales ou par segment RFM.
+    - des remises globales ou par segment RFM,
+    - de la projection de transactions futures basée sur la rétention.
 
     Cette fonction est conçue pour être appelée côté app Streamlit.
 
@@ -288,6 +381,14 @@ def prepare_scenario_dataframe(
     segment_col : str
     use_segment_discounts : bool
         Si True, applique les remises par segment, sinon globale
+    base_retention_rate : float | None
+        Taux de rétention baseline (si None, pas de projection)
+    retention_uplift_pct : float
+        Amélioration relative de la rétention (ex. 0.10 = +10%)
+    project_future : bool
+        Si True, projette des transactions futures
+    n_future_periods : int
+        Nombre de périodes futures à projeter
 
     Returns
     -------
@@ -302,6 +403,33 @@ def prepare_scenario_dataframe(
         drop_customers_na=drop_customers_na,
         returns_policy=returns_policy
     )
+
+    # Projection de transactions futures si demandé
+    if project_future and base_retention_rate is not None:
+        df_future = project_future_transactions_with_retention(
+            df_prepared,
+            base_retention_rate=base_retention_rate,
+            retention_uplift_pct=retention_uplift_pct,
+            n_periods=n_future_periods,
+            customer_col="customer_id",
+            date_col="invoicedate",
+            revenue_col="revenue"
+        )
+        
+        # Marquer les transactions historiques
+        df_prepared['is_projected'] = False
+        
+        # Combiner historique + projections
+        if not df_future.empty:
+            # S'assurer que df_future a les mêmes colonnes essentielles
+            # On va ajouter les colonnes manquantes avec des valeurs par défaut
+            for col in df_prepared.columns:
+                if col not in df_future.columns and col != 'is_projected':
+                    df_future[col] = None
+            
+            df_prepared = pd.concat([df_prepared, df_future], ignore_index=True)
+    else:
+        df_prepared['is_projected'] = False
 
     # Marge baseline
     df_prepared = compute_margin_column(
@@ -343,9 +471,13 @@ def prepare_scenario_dataframe(
         "discount_pct_global": discount_pct_global,
         "use_segment_discounts": use_segment_discounts,
         "segment_discounts": segment_discounts or {},
+        "base_retention_rate": base_retention_rate,
+        "retention_uplift_pct": retention_uplift_pct,
+        "n_projected_transactions": int(df_prepared['is_projected'].sum()) if 'is_projected' in df_prepared.columns else 0,
     }
 
     return df_prepared, info
+
 
 
 def compare_baseline_scenario_kpis(

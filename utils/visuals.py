@@ -85,7 +85,7 @@ def kpi_card(
     # Delta optionnel
     delta_html = ""
     if isinstance(delta, (int, float)):
-        sign = "▲" if delta >= 0 else "▼"
+        sign = "+" if delta >= 0 else "-"
         color = "#16a34a" if delta >= 0 else "#dc2626"
         delta_html = (
             f"<div style='font-size:0.8rem;color:{color};margin-top:0.1rem'>"
@@ -114,7 +114,7 @@ def kpi_card(
     st.markdown(card_html, unsafe_allow_html=True)
 
     if help_text:
-        st.caption("ℹ️ " + help_text)
+        st.caption(help_text)
 
 
 
@@ -148,7 +148,7 @@ def render_global_sidebar(
 ) -> Dict:
 
     with st.sidebar:
-        st.markdown("### 🎚️ Filtres globaux")
+        st.markdown("### Filtres globaux")
 
         st.markdown("#### Données & retours")
         returns_policy = st.radio(
@@ -272,12 +272,12 @@ def fig_to_png_bytes(fig) -> bytes:
     return buf.read()
 
 
-def download_fig_button(fig, filename: str, label: str = "⬇️ Export PNG"):
+def download_fig_button(fig, filename: str, label: str = "Export PNG"):
     try:
         png_bytes = fig_to_png_bytes(fig)
         st.download_button(label=label, data=png_bytes, file_name=filename, mime="image/png")
     except Exception as e:
-        st.caption(f"⚠️ Export PNG indisponible : {e}")
+        st.caption(f"Export PNG indisponible : {e}")
 
 
 def line_chart(df: pd.DataFrame, x: str, y: str, title: str,
@@ -307,8 +307,183 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, orientation: str = "
     return fig
 
 
+def map_chart(df: pd.DataFrame, title: str = "Carte des commandes"):
+    import folium
+    from folium import plugins
+    from streamlit_folium import st_folium
+    
+    # Agrégation par pays avec codes ISO
+    country_stats = (
+        df.groupby("country")
+        .agg(
+            revenue=("revenue", "sum"),
+            count=("invoice", "nunique"),
+            customers=("customer_id", "nunique")
+        )
+        .reset_index()
+    )
+
+    if country_stats.empty:
+        st.info("Pas de données géographiques à afficher.")
+        return
+
+    # Mapping des pays vers leurs coordonnées (latitude, longitude)
+    # Pour les principaux pays européens
+    country_coords = {
+        "United Kingdom": [54.0, -2.0],
+        "France": [46.0, 2.0],
+        "Germany": [51.0, 9.0],
+        "Spain": [40.0, -4.0],
+        "Italy": [42.8, 12.8],
+        "Netherlands": [52.3, 5.5],
+        "Belgium": [50.8, 4.3],
+        "Switzerland": [46.8, 8.2],
+        "Portugal": [39.5, -8.0],
+        "Austria": [47.5, 14.5],
+        "Sweden": [62.0, 15.0],
+        "Norway": [60.5, 8.5],
+        "Denmark": [56.0, 10.0],
+        "Finland": [64.0, 26.0],
+        "Poland": [52.0, 19.0],
+        "Ireland": [53.0, -8.0],
+        "Greece": [39.0, 22.0],
+        "Czech Republic": [49.8, 15.5],
+        "Australia": [-25.0, 133.0],
+        "Japan": [36.0, 138.0],
+        "USA": [37.0, -95.0],
+        "Canada": [56.0, -106.0],
+        "EIRE": [53.0, -8.0],
+        "Channel Islands": [49.2, -2.1],
+        "Iceland": [64.9, -19.0],
+        "Cyprus": [35.1, 33.4],
+        "Malta": [35.9, 14.4],
+        "Lithuania": [55.2, 23.9],
+        "Latvia": [56.9, 24.6],
+        "Estonia": [58.6, 25.0],
+        "Slovakia": [48.7, 19.7],
+        "Hungary": [47.2, 19.5],
+        "Romania": [45.9, 24.9],
+        "Bulgaria": [42.7, 25.5],
+        "Croatia": [45.8, 16.0],
+        "Slovenia": [46.1, 14.8],
+        "Serbia": [44.0, 21.0],
+        "Lebanon": [33.9, 35.5],
+        "United Arab Emirates": [24.0, 54.0],
+        "Israel": [31.5, 34.8],
+        "Saudi Arabia": [24.0, 45.0],
+        "Brazil": [-10.0, -55.0],
+        "Singapore": [1.3, 103.8],
+        "Hong Kong": [22.3, 114.2],
+        "South Africa": [-29.0, 24.0],
+        "Bahrain": [26.0, 50.5],
+        "RSA": [-29.0, 24.0],
+    }
+
+    # Créer la carte centrée sur l'Europe
+    m = folium.Map(
+        location=[50.0, 10.0],
+        zoom_start=4,
+        tiles=None,  # On va ajouter nos propres tiles
+        control_scale=True,
+        prefer_canvas=True
+    )
+
+    # Ajouter plusieurs couches de tuiles (satellite, street, etc.)
+    folium.TileLayer(
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr='Esri',
+        name='Satellite',
+        overlay=False,
+        control=True
+    ).add_to(m)
+    
+    folium.TileLayer(
+        tiles='OpenStreetMap',
+        name='Street Map',
+        overlay=False,
+        control=True
+    ).add_to(m)
+    
+    folium.TileLayer(
+        tiles='CartoDB positron',
+        name='Light',
+        overlay=False,
+        control=True
+    ).add_to(m)
+
+    # Normaliser les revenus pour la taille des cercles
+    max_revenue = country_stats['revenue'].max()
+    min_revenue = country_stats['revenue'].min()
+    
+    # Ajouter les marqueurs pour chaque pays
+    for _, row in country_stats.iterrows():
+        country = row['country']
+        if country in country_coords:
+            coords = country_coords[country]
+            revenue = row['revenue']
+            
+            # Calculer la taille du cercle (entre 10 et 50)
+            if max_revenue > min_revenue:
+                normalized = (revenue - min_revenue) / (max_revenue - min_revenue)
+                radius = 10 + (normalized * 40)
+            else:
+                radius = 25
+            
+            # Calculer la couleur (du bleu au rouge)
+            if max_revenue > min_revenue:
+                normalized = (revenue - min_revenue) / (max_revenue - min_revenue)
+                # Gradient de couleur
+                if normalized < 0.33:
+                    color = '#3b82f6'  # Bleu
+                elif normalized < 0.66:
+                    color = '#f59e0b'  # Orange
+                else:
+                    color = '#ef4444'  # Rouge
+            else:
+                color = '#3b82f6'
+            
+            # Créer le popup
+            popup_html = f"""
+            <div style="font-family: Inter, sans-serif; min-width: 200px;">
+                <h4 style="margin: 0 0 10px 0; color: #0f172a;">{country}</h4>
+                <p style="margin: 5px 0;"><strong>CA:</strong> {revenue:,.0f}€</p>
+                <p style="margin: 5px 0;"><strong>Commandes:</strong> {row['count']:,}</p>
+                <p style="margin: 5px 0;"><strong>Clients:</strong> {row['customers']:,}</p>
+            </div>
+            """
+            
+            folium.CircleMarker(
+                location=coords,
+                radius=radius,
+                popup=folium.Popup(popup_html, max_width=300),
+                color=color,
+                fill=True,
+                fillColor=color,
+                fillOpacity=0.7,
+                weight=2,
+                opacity=0.9
+            ).add_to(m)
+
+    # Ajouter un contrôle de couches
+    folium.LayerControl().add_to(m)
+    
+    # Ajouter un plugin de plein écran
+    plugins.Fullscreen(
+        position='topright',
+        title='Plein écran',
+        title_cancel='Quitter le plein écran',
+        force_separate_button=True
+    ).add_to(m)
+
+    # Afficher la carte dans Streamlit
+    st.markdown(f"### {title}")
+    st_folium(m, width=None, height=600, returned_objects=[])
+    
+    return m
+
+
 def render_active_filters(filters: Dict):
-    st.markdown("#### 🎯 Filtres actifs")
+    st.markdown("#### Filtres actifs")
 
     date_min, date_max = filters["date_range"]
     badge(f"Période : {date_min} → {date_max}")
